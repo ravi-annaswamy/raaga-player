@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Raaga Player by Ravi Chandran</title>
+<meta name="description" content="Play Indian classical ragas in your browser. All 72 melakartas, 10 Hindustani thaats, and popular janya ragas with a touch-friendly keyboard. No wrong notes — just music.">
+<meta name="author" content="Ravi Chandran">
+<meta name="theme-color" content="#0c0f1a">
+<!-- Open Graph -->
+<meta property="og:title" content="Raaga Player — Indian Classical Scale Keyboard">
+<meta property="og:description" content="Play all 72 melakartas, 10 thaats, and popular janya ragas in your browser. Touch-friendly keyboard where every note is in raga.">
+<meta property="og:image" content="og-image.png">
+<meta property="og:type" content="website">
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Raaga Player — Indian Classical Scale Keyboard">
+<meta name="twitter:description" content="Play all 72 melakartas, 10 thaats, and janya ragas. Touch-friendly. No wrong notes.">
+<meta name="twitter:image" content="og-image.png">
+<!-- Favicon -->
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0c0f1a;
+  --surface: rgba(20, 26, 46, 0.85);
+  --glass: rgba(255,255,255,0.04);
+  --glass-border: rgba(255,255,255,0.08);
+  --accent: #e94560;
+  --accent-glow: rgba(233,69,96,0.3);
+  --gold: #f0c27f;
+  --gold-dim: rgba(240,194,127,0.15);
+  --teal: #4ecdc4;
+  --teal-dim: rgba(78,205,196,0.15);
+  --text: #f0f0f0;
+  --text-dim: rgba(255,255,255,0.45);
+  --text-mid: rgba(255,255,255,0.65);
+  --key-white: linear-gradient(180deg, #e0e0e0 0%, #c8c8c8 30%, #b8b8b8 70%, #d0d0d0 100%);
+  --key-active: linear-gradient(180deg, #ff9a56 0%, #e94560 100%);
+  --sa-key: linear-gradient(180deg, #ffe8c8 0%, #ffd699 30%, #f5c270 70%, #ffe0aa 100%);
+  --pa-key: linear-gradient(180deg, #c8eed0 0%, #a5d6a7 30%, #7cc47f 70%, #b5e0b8 100%);
+}
+html, body {
+  height: 100%; width: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+body::before {
+  content: '';
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background:
+    radial-gradient(ellipse at 20% 20%, rgba(233,69,96,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(78,205,196,0.05) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(240,194,127,0.03) 0%, transparent 60%);
+  pointer-events: none; z-index: 0;
+}
+
+/* ---- App layout ---- */
+.app {
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column;
+  height: 100%; height: 100dvh;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+/* ---- Title bar ---- */
+.title-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 4px 8px;
+  flex-shrink: 0;
+}
+.brand {
+  display: flex; align-items: baseline; gap: 10px;
+}
+.brand h1 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 26px;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--gold) 0%, #fff 50%, var(--teal) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 0.5px;
+}
+.brand .by {
+  font-size: 12px;
+  font-weight: 300;
+  color: var(--text-mid);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.title-right {
+  display: flex; align-items: center; gap: 6px;
+}
+
+/* ---- Panel (glass card) ---- */
+.panel {
+  background: var(--surface);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  padding: 12px 16px;
+  flex-shrink: 0;
+}
+
+/* ---- Top controls panel ---- */
+.top-panel {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.top-panel .section {
+  display: flex; align-items: center; gap: 10px;
+}
+.section-label {
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  margin-right: 2px;
+}
+
+/* ---- Scale selector ---- */
+.scale-select {
+  background: rgba(0,0,0,0.35);
+  color: var(--text);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  max-width: 280px;
+  width: 100%;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+.scale-select:focus { border-color: var(--gold); }
+.scale-select optgroup { color: var(--accent); background: #141a2e; font-weight: 600; }
+.scale-select option { color: var(--text); background: #141a2e; font-weight: 400; }
+
+/* ---- Pill buttons ---- */
+.pill-group {
+  display: flex;
+  background: rgba(0,0,0,0.3);
+  border-radius: 8px;
+  border: 1px solid var(--glass-border);
+  overflow: hidden;
+}
+.pill {
+  background: transparent;
+  color: var(--text-mid);
+  border: none;
+  padding: 6px 14px;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  white-space: nowrap;
+}
+.pill:not(:last-child) { border-right: 1px solid var(--glass-border); }
+.pill:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+.pill.active {
+  color: #fff;
+  background: var(--accent);
+  box-shadow: 0 0 12px var(--accent-glow);
+}
+
+/* ---- Icon button ---- */
+.icon-btn {
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  color: var(--text-mid);
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.icon-btn:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+
+/* ---- Scale info strip ---- */
+.scale-info {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 4px;
+  flex-shrink: 0;
+  gap: 10px;
+}
+.swaras {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  color: var(--gold);
+  font-family: 'Inter', sans-serif;
+}
+.meta {
+  font-size: 12px;
+  color: var(--text-dim);
+  font-weight: 400;
+}
+.meta .tag {
+  display: inline-block;
+  background: var(--gold-dim);
+  color: var(--gold);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-right: 6px;
+}
+
+/* ---- Keyboard area (centered horizontal strip) ---- */
+.keyboard-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding: 6px 0;
+}
+.keyboard-container {
+  width: 100%;
+  height: clamp(180px, 55vh, 360px);
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 16px;
+  border: 1px solid var(--glass-border);
+  background: rgba(0,0,0,0.25);
+  box-shadow:
+    0 8px 32px rgba(0,0,0,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.05);
+}
+.keyboard {
+  display: flex;
+  height: 100%;
+  min-width: 100%;
+}
+
+/* ---- Keys ---- */
+.key {
+  flex: 1;
+  min-width: 60px;
+  max-width: 110px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: 20px;
+  background: var(--key-white);
+  border-right: 2px solid rgba(12,15,26,0.9);
+  border-bottom: 4px solid #999;
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.04s, filter 0.04s;
+}
+.key:first-child { border-radius: 14px 0 0 14px; }
+.key:last-child { border-radius: 0 14px 14px 0; border-right: none; }
+.key:hover { filter: brightness(1.03); }
+.key:active, .key.playing {
+  background: var(--key-active) !important;
+  border-bottom-color: #c0392b;
+  transform: translateY(1px);
+  filter: brightness(1.1);
+}
+.key.sa-key { background: var(--sa-key); border-bottom-color: #d4a24a; }
+.key.pa-key { background: var(--pa-key); border-bottom-color: #5a9e5c; }
+.key-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #2a2a2a;
+  text-align: center;
+  pointer-events: none;
+}
+.key-sublabel {
+  font-size: 10px;
+  color: #666;
+  margin-top: 2px;
+  pointer-events: none;
+}
+.key-octave {
+  position: absolute;
+  top: 8px;
+  font-size: 11px;
+  color: #999;
+  pointer-events: none;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* ---- Bottom controls panel ---- */
+.bottom-panel {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  margin-bottom: 14px;
+}
+.bottom-panel .section {
+  display: flex; align-items: center; gap: 8px;
+}
+
+/* Toggle buttons (sustain, glissando) */
+.toggle-btn {
+  background: rgba(0,0,0,0.3);
+  color: var(--text-mid);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.3px;
+}
+.toggle-btn:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+.toggle-btn.active {
+  background: rgba(78,205,196,0.15);
+  color: var(--teal);
+  border-color: rgba(78,205,196,0.3);
+  box-shadow: 0 0 10px rgba(78,205,196,0.15);
+}
+
+/* Octave stepper */
+.stepper {
+  display: flex; align-items: center;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.stepper-btn {
+  background: transparent;
+  color: var(--text-mid);
+  border: none;
+  width: 32px; height: 32px;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+  font-family: 'Inter', sans-serif;
+}
+.stepper-btn:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+.stepper-val {
+  font-size: 14px;
+  font-weight: 600;
+  padding: 0 10px;
+  min-width: 28px;
+  text-align: center;
+  color: var(--text);
+  border-left: 1px solid var(--glass-border);
+  border-right: 1px solid var(--glass-border);
+}
+
+/* Tonic select */
+.tonic-select {
+  background: rgba(0,0,0,0.35);
+  color: var(--text);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 26px;
+}
+.tonic-select:focus { border-color: var(--gold); }
+
+/* ---- Search overlay ---- */
+.search-overlay {
+  display: none;
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(12,15,26,0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 100;
+  padding: 20px;
+  flex-direction: column;
+  align-items: center;
+}
+.search-overlay.open { display: flex; }
+.search-input {
+  background: rgba(20,26,46,0.95);
+  color: var(--text);
+  border: 1px solid rgba(240,194,127,0.3);
+  border-radius: 12px;
+  padding: 14px 18px;
+  font-family: 'Inter', sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  width: 100%;
+  max-width: 520px;
+  margin-bottom: 16px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.search-input:focus { border-color: var(--gold); box-shadow: 0 0 20px var(--gold-dim); }
+.search-input::placeholder { color: var(--text-dim); }
+.search-results {
+  flex: 1; overflow-y: auto;
+  max-width: 520px;
+  width: 100%;
+}
+.search-result {
+  padding: 12px 16px;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: background 0.15s;
+  margin-bottom: 2px;
+}
+.search-result:hover { background: rgba(255,255,255,0.06); }
+.search-result .name {
+  font-weight: 600; font-size: 15px;
+  color: var(--text);
+}
+.search-result .detail {
+  font-size: 12px; color: var(--text-dim);
+  margin-top: 3px;
+}
+.search-hint {
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 8px;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 700px) {
+  .app { padding: 0 8px; }
+  .brand h1 { font-size: 20px; }
+  .panel { padding: 10px 12px; border-radius: 12px; }
+  .scale-select { max-width: 200px; font-size: 13px; }
+  .pill { padding: 5px 10px; font-size: 11px; }
+  .key { min-width: 50px; }
+  .key-label { font-size: 15px; }
+  .swaras { font-size: 13px; letter-spacing: 2px; }
+  .keyboard-container { height: clamp(160px, 50vh, 300px); }
+  .bottom-panel { gap: 8px; }
+  .toggle-btn { padding: 5px 10px; font-size: 11px; }
+}
+@media (max-width: 480px) {
+  .title-bar { padding: 10px 2px 6px; }
+  .brand h1 { font-size: 18px; }
+  .section-label { display: none; }
+  .top-panel, .bottom-panel { justify-content: center; }
+}
+
+/* Glissando cursor */
+.glissando-active .key { cursor: grab; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Title bar -->
+  <div class="title-bar">
+    <div class="brand">
+      <h1>Raaga Player</h1>
+      <span class="by">by Ravi Chandran</span>
+    </div>
+    <div class="title-right">
+      <button class="icon-btn" id="searchBtn" title="Search ragas (/)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Top controls panel -->
+  <div class="panel top-panel">
+    <div class="section">
+      <span class="section-label">Type</span>
+      <div class="pill-group category-pills">
+        <button class="pill active" data-category="janya">Janya</button>
+        <button class="pill" data-category="melakarta">Mela</button>
+        <button class="pill" data-category="thaat">Thaat</button>
+      </div>
+    </div>
+    <div class="section">
+      <span class="section-label">Raga</span>
+      <select class="scale-select" id="scaleSelect"></select>
+    </div>
+    <div class="section">
+      <span class="section-label">Notation</span>
+      <div class="pill-group notation-pills">
+        <button class="pill active" data-notation="sargam">S R G</button>
+        <button class="pill" data-notation="western">C D E</button>
+        <button class="pill" data-notation="frequency">Hz</button>
+      </div>
+    </div>
+    <div class="section">
+      <span class="section-label">Tone</span>
+      <div class="pill-group wave-pills">
+        <button class="pill active" data-wave="tanpura">Tanpura</button>
+        <button class="pill" data-wave="sine">Sine</button>
+        <button class="pill" data-wave="triangle">Soft</button>
+        <button class="pill" data-wave="sawtooth">Bright</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scale info strip -->
+  <div class="scale-info">
+    <span class="swaras" id="scaleNotes"></span>
+    <span class="meta" id="scaleInfo"></span>
+  </div>
+
+  <!-- Keyboard (centered) -->
+  <div class="keyboard-wrapper">
+    <div class="keyboard-container" id="keyboardContainer">
+      <div class="keyboard" id="keyboard"></div>
+    </div>
+  </div>
+
+  <!-- Bottom controls panel -->
+  <div class="panel bottom-panel">
+    <div class="section">
+      <span class="section-label">Sa</span>
+      <select class="tonic-select" id="tonicSelect">
+        <option value="48">C3</option>
+        <option value="49">C#3 / Db3</option>
+        <option value="50">D3</option>
+        <option value="51">D#3 / Eb3</option>
+        <option value="52">E3</option>
+        <option value="53">F3</option>
+        <option value="54">F#3 / Gb3</option>
+        <option value="55">G3</option>
+        <option value="56">G#3 / Ab3</option>
+        <option value="57">A3</option>
+        <option value="58">A#3 / Bb3</option>
+        <option value="59">B3</option>
+        <option value="60" selected>C4 (Middle C)</option>
+        <option value="61">C#4 / Db4</option>
+        <option value="62">D4</option>
+      </select>
+    </div>
+    <div class="section">
+      <span class="section-label">Octaves</span>
+      <div class="stepper">
+        <button class="stepper-btn" id="octDown">&#x2212;</button>
+        <span class="stepper-val" id="octaveDisplay">2</span>
+        <button class="stepper-btn" id="octUp">+</button>
+      </div>
+    </div>
+    <div class="section">
+      <button class="toggle-btn" id="sustainBtn">Sustain</button>
+      <button class="toggle-btn active" id="glissandoBtn">Glissando</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Search overlay -->
+<div class="search-overlay" id="searchOverlay">
+  <input class="search-input" id="searchInput" type="text" placeholder="Search ragas, melakartas, thaats...">
+  <div class="search-results" id="searchResults"></div>
+  <div class="search-hint">Press / to search &middot; Esc to close</div>
+</div>
+
+<script>
+// ===================== SCALE DATA =====================
+
+const MELAKARTA_NAMES = [
+  "Kanakangi","Ratnangi","Ganamurti","Vanaspati","Manavati","Tanarupi",
+  "Senavati","Hanumatodi","Dhenuka","Natakapriya","Kokilapriya","Rupavati",
+  "Gayakapriya","Vakulabharanam","Mayamalavagowla","Chakravakam","Suryakantam","Hatakambari",
+  "Jhankaradhwani","Natabhairavi","Keeravani","Kharaharapriya","Gourimanohari","Varunapriya",
+  "Mararanjani","Charukesi","Sarasangi","Harikambhoji","Dheerasankarabharanam","Naganandini",
+  "Yagapriya","Ragavardhini","Gangeyabhushani","Vagadheeswari","Shulini","Chalanata",
+  "Salagam","Jalarnavam","Jhalavarali","Navaneetam","Pavani","Raghupriya",
+  "Gavambhodi","Bhavapriya","Shubhapantuvarali","Shadvidhamargini","Suvarnangi","Divyamani",
+  "Dhavalambari","Namanarayani","Kamavardhini","Ramapriya","Gamanashrama","Vishwambari",
+  "Shamalangi","Shanmukhapriya","Simhendramadhyamam","Hemavati","Dharmaavati","Neetimati",
+  "Kantamani","Rishabhapriya","Latangi","Vachaspati","Mechakalyani","Chitrambari",
+  "Sucharitra","Jyotiswarupini","Dhatuvardhini","Nasikabhushani","Kosalam","Rasikapriya"
+];
+
+const CARNATIC_SWARA = {
+  0: { name: "Sa", abbr: "S", variant: "" },
+  1: { name: "Suddha Ri", abbr: "R₁", variant: "Suddha Rishabham" },
+  2: { name: "Chatusruti Ri", abbr: "R₂", variant: "Chatusruti Rishabham" },
+  3: { name: "Sadharana Ga", abbr: "G₂", variant: "Sadharana Gandharam" },
+  4: { name: "Antara Ga", abbr: "G₃", variant: "Antara Gandharam" },
+  5: { name: "Suddha Ma", abbr: "M₁", variant: "Suddha Madhyamam" },
+  6: { name: "Prati Ma", abbr: "M₂", variant: "Prati Madhyamam" },
+  7: { name: "Pa", abbr: "P", variant: "" },
+  8: { name: "Suddha Dha", abbr: "D₁", variant: "Suddha Dhaivatam" },
+  9: { name: "Chatusruti Dha", abbr: "D₂", variant: "Chatusruti Dhaivatam" },
+  10: { name: "Kaisiki Ni", abbr: "N₂", variant: "Kaisiki Nishadam" },
+  11: { name: "Kakali Ni", abbr: "N₃", variant: "Kakali Nishadam" }
+};
+
+function getMelakartaSwaraLabel(semitone, role) {
+  if (role === 'ri') {
+    if (semitone === 1) return { abbr: "R₁", name: "Suddha Ri" };
+    if (semitone === 2) return { abbr: "R₂", name: "Chatusruti Ri" };
+    if (semitone === 3) return { abbr: "R₃", name: "Shatsruti Ri" };
+  }
+  if (role === 'ga') {
+    if (semitone === 2) return { abbr: "G₁", name: "Suddha Ga" };
+    if (semitone === 3) return { abbr: "G₂", name: "Sadharana Ga" };
+    if (semitone === 4) return { abbr: "G₃", name: "Antara Ga" };
+  }
+  if (role === 'dha') {
+    if (semitone === 8) return { abbr: "D₁", name: "Suddha Dha" };
+    if (semitone === 9) return { abbr: "D₂", name: "Chatusruti Dha" };
+    if (semitone === 10) return { abbr: "D₃", name: "Shatsruti Dha" };
+  }
+  if (role === 'ni') {
+    if (semitone === 9) return { abbr: "N₁", name: "Suddha Ni" };
+    if (semitone === 10) return { abbr: "N₂", name: "Kaisiki Ni" };
+    if (semitone === 11) return { abbr: "N₃", name: "Kakali Ni" };
+  }
+  return CARNATIC_SWARA[semitone] || { abbr: "?", name: "?" };
+}
+
+const RI_GA = [[1,2],[1,3],[1,4],[2,3],[2,4],[3,4]];
+const DHA_NI = [[8,9],[8,10],[8,11],[9,10],[9,11],[10,11]];
+
+function generateMelakarta(num) {
+  const n = num - 1, isM2 = n >= 36, m = n % 36;
+  const chakra = Math.floor(m / 6), pos = m % 6;
+  const [ri, ga] = RI_GA[chakra];
+  const ma = isM2 ? 6 : 5;
+  const [dha, ni] = DHA_NI[pos];
+  const semitones = [0, ri, ga, ma, 7, dha, ni];
+  const roles = ['sa', 'ri', 'ga', 'ma', 'pa', 'dha', 'ni'];
+  const labels = semitones.map((s, i) => {
+    if (s === 0) return { abbr: "S", name: "Sa" };
+    if (s === 7) return { abbr: "P", name: "Pa" };
+    if (s === 5) return { abbr: "M₁", name: "Suddha Ma" };
+    if (s === 6) return { abbr: "M₂", name: "Prati Ma" };
+    return getMelakartaSwaraLabel(s, roles[i]);
+  });
+  return { semitones, labels, roles };
+}
+
+const MELAKARTAS = [];
+for (let i = 1; i <= 72; i++) {
+  const { semitones, labels, roles } = generateMelakarta(i);
+  MELAKARTAS.push({
+    id: `m${i}`, name: `${i}. ${MELAKARTA_NAMES[i-1]}`, num: i, type: 'melakarta',
+    semitones, labels, roles,
+    chakra: Math.floor(((i-1) % 36) / 6) + 1,
+    searchName: MELAKARTA_NAMES[i-1].toLowerCase()
+  });
+}
+
+const THAAT_DEFS = [
+  { name: "Bilawal", semitones: [0,2,4,5,7,9,11], hindiLabels: ["S","R","G","m","P","D","N"], equiv: "Dheerasankarabharanam (29)" },
+  { name: "Khamaj", semitones: [0,2,4,5,7,9,10], hindiLabels: ["S","R","G","m","P","D","n"], equiv: "Harikambhoji (28)" },
+  { name: "Kafi", semitones: [0,2,3,5,7,9,10], hindiLabels: ["S","R","g","m","P","D","n"], equiv: "Kharaharapriya (22)" },
+  { name: "Asavari", semitones: [0,2,3,5,7,8,10], hindiLabels: ["S","R","g","m","P","d","n"], equiv: "Natabhairavi (20)" },
+  { name: "Bhairavi", semitones: [0,1,3,5,7,8,10], hindiLabels: ["S","r","g","m","P","d","n"], equiv: "Hanumatodi (8)" },
+  { name: "Bhairav", semitones: [0,1,4,5,7,8,11], hindiLabels: ["S","r","G","m","P","d","N"], equiv: "Mayamalavagowla (15)" },
+  { name: "Kalyan", semitones: [0,2,4,6,7,9,11], hindiLabels: ["S","R","G","M","P","D","N"], equiv: "Mechakalyani (65)" },
+  { name: "Marwa", semitones: [0,1,4,6,7,9,11], hindiLabels: ["S","r","G","M","P","D","N"], equiv: "Gamanashrama (53)" },
+  { name: "Purvi", semitones: [0,1,4,6,7,8,11], hindiLabels: ["S","r","G","M","P","d","N"], equiv: "Kamavardhini (51)" },
+  { name: "Todi", semitones: [0,1,3,6,7,8,11], hindiLabels: ["S","r","g","M","P","d","N"], equiv: "Shubhapantuvarali (45)" },
+];
+const THAATS = THAAT_DEFS.map((t, i) => ({
+  id: `t${i}`, name: t.name, type: 'thaat',
+  semitones: t.semitones, hindiLabels: t.hindiLabels, equiv: t.equiv,
+  searchName: t.name.toLowerCase()
+}));
+
+const JANYA_DEFS = [
+  { name: "Mohanam", notes: 5, semitones: [0,2,4,7,9], parent: 28, labels: ["S","R₂","G₃","P","D₂"] },
+  { name: "Hamsadhwani", notes: 5, semitones: [0,2,4,7,11], parent: 29, labels: ["S","R₂","G₃","P","N₃"] },
+  { name: "Hindolam", notes: 5, semitones: [0,3,5,8,10], parent: 20, labels: ["S","G₂","M₁","D₁","N₂"] },
+  { name: "Abhogi", notes: 5, semitones: [0,2,3,5,9], parent: 22, labels: ["S","R₂","G₂","M₁","D₂"] },
+  { name: "Amritavarshini", notes: 5, semitones: [0,5,7,9,11], parent: 65, labels: ["S","M₁","P","D₂","N₃"] },
+  { name: "Shudha Saveri", notes: 5, semitones: [0,2,5,7,9], parent: 29, labels: ["S","R₂","M₁","P","D₂"] },
+  { name: "Revati", notes: 5, semitones: [0,1,5,7,8], parent: 8, labels: ["S","R₁","M₁","P","D₁"] },
+  { name: "Malkauns / Hindolam", notes: 5, semitones: [0,3,5,8,10], parent: 20, labels: ["S","G₂","M₁","D₁","N₂"] },
+  { name: "Madhyamavati", notes: 5, semitones: [0,2,5,7,10], parent: 22, labels: ["S","R₂","M₁","P","N₂"] },
+  { name: "Shuddha Dhanyasi", notes: 5, semitones: [0,3,5,7,10], parent: 20, labels: ["S","G₂","M₁","P","N₂"] },
+  { name: "Valaji", notes: 5, semitones: [0,4,7,9,11], parent: 65, labels: ["S","G₃","P","D₂","N₃"] },
+  { name: "Gambhiranata", notes: 5, semitones: [0,2,4,7,11], parent: 29, labels: ["S","R₂","G₃","P","N₃"] },
+  { name: "Sriranjani", notes: 6, semitones: [0,2,3,5,7,9], parent: 22, labels: ["S","R₂","G₂","M₁","P","D₂"] },
+  { name: "Begada", notes: 6, semitones: [0,2,4,5,7,9], parent: 29, labels: ["S","R₂","G₃","M₁","P","D₂"] },
+  { name: "Saraswati", notes: 6, semitones: [0,2,5,6,7,11], parent: 65, labels: ["S","R₂","M₁","M₂","P","N₃"] },
+  { name: "Brindavana Saranga", notes: 6, semitones: [0,2,4,5,7,10], parent: 22, labels: ["S","R₂","G₃","M₁","P","N₂"] },
+];
+const JANYAS = JANYA_DEFS.map((j, i) => ({
+  id: `j${i}`, name: j.name, type: 'janya', notes: j.notes,
+  semitones: j.semitones, preLabels: j.labels, parent: j.parent,
+  searchName: j.name.toLowerCase()
+}));
+
+const ALL_SCALES = [...MELAKARTAS, ...THAATS, ...JANYAS];
+const WESTERN_NOTES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+
+// ===================== STATE =====================
+let state = {
+  category: 'janya',
+  currentScale: JANYAS[0], // Mohanam
+  notation: 'sargam',
+  tonicMidi: 60,
+  octaves: 2,
+  sustain: false,
+  glissando: true,
+  waveType: 'tanpura',
+};
+
+// ===================== AUDIO ENGINE =====================
+let audioCtx = null;
+const activeNotes = new Map();
+
+function ensureAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function midiToFreq(midi) { return 440 * Math.pow(2, (midi - 69) / 12); }
+
+function playNote(midiNote) {
+  ensureAudio();
+  if (activeNotes.has(midiNote)) return;
+  const freq = midiToFreq(midiNote);
+  const now = audioCtx.currentTime;
+  let osc, osc2, oscSub;
+  const gainNode = audioCtx.createGain();
+  gainNode.gain.setValueAtTime(0, now);
+
+  if (state.waveType === 'tanpura') {
+    osc = audioCtx.createOscillator(); osc.type = 'sine'; osc.frequency.setValueAtTime(freq, now);
+    osc2 = audioCtx.createOscillator(); osc2.type = 'triangle'; osc2.frequency.setValueAtTime(freq * 1.002, now);
+    oscSub = audioCtx.createOscillator(); oscSub.type = 'sine'; oscSub.frequency.setValueAtTime(freq * 0.5, now);
+    const g1 = audioCtx.createGain(); g1.gain.value = 0.5;
+    const g2 = audioCtx.createGain(); g2.gain.value = 0.25;
+    const g3 = audioCtx.createGain(); g3.gain.value = 0.15;
+    osc.connect(g1).connect(gainNode);
+    osc2.connect(g2).connect(gainNode);
+    oscSub.connect(g3).connect(gainNode);
+    osc.start(now); osc2.start(now); oscSub.start(now);
+  } else {
+    osc = audioCtx.createOscillator(); osc.type = state.waveType;
+    osc.frequency.setValueAtTime(freq, now);
+    osc.connect(gainNode); osc.start(now);
+  }
+  gainNode.connect(audioCtx.destination);
+  gainNode.gain.linearRampToValueAtTime(0.35, now + 0.04);
+  gainNode.gain.linearRampToValueAtTime(0.25, now + 0.15);
+  activeNotes.set(midiNote, { osc, osc2, oscSub, gainNode });
+}
+
+function stopNote(midiNote) {
+  if (!audioCtx) return;
+  const note = activeNotes.get(midiNote);
+  if (!note) return;
+  const now = audioCtx.currentTime;
+  note.gainNode.gain.cancelScheduledValues(now);
+  note.gainNode.gain.setValueAtTime(note.gainNode.gain.value, now);
+  note.gainNode.gain.linearRampToValueAtTime(0, now + 0.15);
+  setTimeout(() => {
+    try { note.osc.stop(); } catch(e) {}
+    try { note.osc2?.stop(); } catch(e) {}
+    try { note.oscSub?.stop(); } catch(e) {}
+  }, 200);
+  activeNotes.delete(midiNote);
+}
+
+function stopAllNotes() {
+  for (const midi of activeNotes.keys()) stopNote(midi);
+}
+
+// ===================== UI =====================
+const scaleSelect = document.getElementById('scaleSelect');
+const keyboard = document.getElementById('keyboard');
+const scaleNotesEl = document.getElementById('scaleNotes');
+const scaleInfoEl = document.getElementById('scaleInfo');
+const octaveDisplay = document.getElementById('octaveDisplay');
+
+function getScalesForCategory(cat) {
+  if (cat === 'melakarta') return MELAKARTAS;
+  if (cat === 'thaat') return THAATS;
+  return JANYAS;
+}
+
+function populateScaleSelect() {
+  const scales = getScalesForCategory(state.category);
+  let html = '';
+  scales.forEach(s => {
+    let label = s.name;
+    if (s.type === 'janya') label += ` (${s.notes} notes)`;
+    html += `<option value="${s.id}">${label}</option>`;
+  });
+  scaleSelect.innerHTML = html;
+  // If current scale doesn't belong to this category, pick the first one
+  if (!scales.find(s => s.id === state.currentScale.id)) {
+    state.currentScale = scales[0];
+  }
+  scaleSelect.value = state.currentScale.id;
+}
+
+function getKeyLabel(semitone, index, scale) {
+  if (state.notation === 'western') {
+    return { main: WESTERN_NOTES[(state.tonicMidi + semitone) % 12], sub: '' };
+  }
+  if (state.notation === 'frequency') {
+    return { main: midiToFreq(state.tonicMidi + semitone).toFixed(1), sub: 'Hz' };
+  }
+  if (scale.type === 'melakarta') return { main: scale.labels[index % scale.semitones.length].abbr, sub: '' };
+  if (scale.type === 'thaat') return { main: scale.hindiLabels[index % scale.semitones.length], sub: '' };
+  if (scale.type === 'janya') return { main: scale.preLabels[index % scale.semitones.length], sub: '' };
+  return { main: CARNATIC_SWARA[semitone]?.abbr || '?', sub: '' };
+}
+
+function renderKeyboard() {
+  const scale = state.currentScale;
+  const npo = scale.semitones.length;
+  const totalKeys = npo * state.octaves + 1;
+  let html = '';
+  for (let i = 0; i < totalKeys; i++) {
+    const octOff = Math.floor(i / npo), ni = i % npo;
+    const semi = scale.semitones[ni] + (octOff * 12);
+    const midi = state.tonicMidi + semi;
+    const { main, sub } = getKeyLabel(scale.semitones[ni], i, scale);
+    const isSa = ni === 0, isPa = scale.semitones[ni] === 7;
+    const cls = isSa ? ' sa-key' : (isPa ? ' pa-key' : '');
+    const oct = octOff + Math.floor(state.tonicMidi / 12) - 1;
+    html += `<div class="key${cls}" data-midi="${midi}">
+      <span class="key-label">${main}</span>
+      ${sub ? `<span class="key-sublabel">${sub}</span>` : ''}
+      ${isSa ? `<span class="key-octave">${oct}</span>` : ''}
+    </div>`;
+  }
+  keyboard.innerHTML = html;
+
+  // Update swaras display
+  scaleNotesEl.textContent = scale.semitones.map((s, i) => getKeyLabel(s, i, scale).main).join('   ');
+
+  let info = '';
+  if (scale.type === 'melakarta') {
+    info = `<span class="tag">M${scale.num}</span> Chakra ${scale.chakra} &middot; ${scale.num <= 36 ? 'Suddha Ma' : 'Prati Ma'}`;
+  } else if (scale.type === 'thaat') {
+    info = `<span class="tag">Thaat</span> ${scale.equiv}`;
+  } else if (scale.type === 'janya') {
+    info = `<span class="tag">${scale.notes} notes</span> Parent: Melakarta ${scale.parent}`;
+  }
+  scaleInfoEl.innerHTML = info;
+}
+
+// ===================== TOUCH / MOUSE =====================
+let isPointerDown = false;
+let currentTouchNotes = new Set();
+
+function getNoteFromEvent(e) {
+  const touch = e.touches ? e.touches[0] : e;
+  const el = document.elementFromPoint(touch.clientX, touch.clientY);
+  if (el && el.closest('.key')) return parseInt(el.closest('.key').dataset.midi);
+  return null;
+}
+
+function handlePointerDown(e) {
+  e.preventDefault(); ensureAudio(); isPointerDown = true;
+  const midi = getNoteFromEvent(e);
+  if (midi !== null) { playNote(midi); currentTouchNotes.add(midi); highlightKey(midi, true); }
+}
+function handlePointerMove(e) {
+  e.preventDefault();
+  if (!isPointerDown) return;
+  const midi = getNoteFromEvent(e);
+  if (midi === null) return;
+  if (state.glissando && !currentTouchNotes.has(midi)) {
+    if (!state.sustain) {
+      for (const n of currentTouchNotes) { stopNote(n); highlightKey(n, false); }
+      currentTouchNotes.clear();
+    }
+    playNote(midi); currentTouchNotes.add(midi); highlightKey(midi, true);
+  }
+}
+function handlePointerUp(e) {
+  e.preventDefault(); isPointerDown = false;
+  if (!state.sustain) {
+    for (const n of currentTouchNotes) { stopNote(n); highlightKey(n, false); }
+    currentTouchNotes.clear();
+  }
+}
+function highlightKey(midi, on) {
+  const key = keyboard.querySelector(`.key[data-midi="${midi}"]`);
+  if (key) key.classList.toggle('playing', on);
+}
+
+const kbContainer = document.getElementById('keyboardContainer');
+kbContainer.addEventListener('mousedown', handlePointerDown);
+kbContainer.addEventListener('mousemove', handlePointerMove);
+kbContainer.addEventListener('mouseup', handlePointerUp);
+kbContainer.addEventListener('mouseleave', handlePointerUp);
+kbContainer.addEventListener('touchstart', handlePointerDown, { passive: false });
+kbContainer.addEventListener('touchmove', handlePointerMove, { passive: false });
+kbContainer.addEventListener('touchend', handlePointerUp, { passive: false });
+kbContainer.addEventListener('touchcancel', handlePointerUp, { passive: false });
+
+// ===================== CONTROLS =====================
+document.querySelectorAll('.category-pills .pill').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.category-pills .pill').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.category = btn.dataset.category;
+    stopAllNotes(); currentTouchNotes.clear();
+    populateScaleSelect();
+    renderKeyboard();
+  });
+});
+
+scaleSelect.addEventListener('change', (e) => {
+  const scale = ALL_SCALES.find(s => s.id === e.target.value);
+  if (scale) { stopAllNotes(); currentTouchNotes.clear(); state.currentScale = scale; renderKeyboard(); }
+});
+
+document.getElementById('tonicSelect').addEventListener('change', (e) => {
+  stopAllNotes(); currentTouchNotes.clear();
+  state.tonicMidi = parseInt(e.target.value); renderKeyboard();
+});
+
+document.querySelectorAll('.notation-pills .pill').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.notation-pills .pill').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active'); state.notation = btn.dataset.notation; renderKeyboard();
+  });
+});
+
+document.querySelectorAll('.wave-pills .pill').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.wave-pills .pill').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active'); state.waveType = btn.dataset.wave;
+    stopAllNotes(); currentTouchNotes.clear();
+  });
+});
+
+document.getElementById('octDown').addEventListener('click', () => {
+  if (state.octaves > 1) { state.octaves--; octaveDisplay.textContent = state.octaves; stopAllNotes(); currentTouchNotes.clear(); renderKeyboard(); }
+});
+document.getElementById('octUp').addEventListener('click', () => {
+  if (state.octaves < 4) { state.octaves++; octaveDisplay.textContent = state.octaves; stopAllNotes(); currentTouchNotes.clear(); renderKeyboard(); }
+});
+
+document.getElementById('sustainBtn').addEventListener('click', (e) => {
+  state.sustain = !state.sustain; e.target.classList.toggle('active', state.sustain);
+  if (!state.sustain) { stopAllNotes(); currentTouchNotes.clear(); keyboard.querySelectorAll('.key.playing').forEach(k => k.classList.remove('playing')); }
+});
+
+document.getElementById('glissandoBtn').addEventListener('click', (e) => {
+  state.glissando = !state.glissando; e.target.classList.toggle('active', state.glissando);
+  kbContainer.classList.toggle('glissando-active', state.glissando);
+});
+
+// ===================== SEARCH =====================
+const searchOverlay = document.getElementById('searchOverlay');
+const searchInput = document.getElementById('searchInput');
+const searchResults = document.getElementById('searchResults');
+
+document.getElementById('searchBtn').addEventListener('click', () => {
+  searchOverlay.classList.add('open'); searchInput.value = ''; searchInput.focus(); renderSearchResults('');
+});
+searchOverlay.addEventListener('click', (e) => { if (e.target === searchOverlay) searchOverlay.classList.remove('open'); });
+searchInput.addEventListener('input', () => renderSearchResults(searchInput.value));
+searchInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') searchOverlay.classList.remove('open');
+  if (e.key === 'Enter') { const first = searchResults.querySelector('.search-result'); if (first) first.click(); }
+});
+
+function renderSearchResults(query) {
+  const q = query.toLowerCase().trim();
+  let results = ALL_SCALES;
+  if (q) {
+    results = ALL_SCALES.filter(s => {
+      const name = s.searchName || s.name.toLowerCase();
+      return name.includes(q) || (s.type === 'melakarta' && (`${s.num}`.includes(q) || `m${s.num}`.includes(q)))
+        || (s.equiv && s.equiv.toLowerCase().includes(q));
+    });
+  }
+  searchResults.innerHTML = results.slice(0, 30).map(s => {
+    let detail = '';
+    if (s.type === 'melakarta') detail = `Melakarta ${s.num} &middot; Chakra ${s.chakra}`;
+    else if (s.type === 'thaat') detail = `Thaat &middot; ${s.equiv}`;
+    else if (s.type === 'janya') detail = `${s.notes}-note Janya &middot; Parent M${s.parent}`;
+    return `<div class="search-result" data-id="${s.id}"><div class="name">${s.name}</div><div class="detail">${detail}</div></div>`;
+  }).join('');
+  searchResults.querySelectorAll('.search-result').forEach(el => {
+    el.addEventListener('click', () => {
+      const scale = ALL_SCALES.find(s => s.id === el.dataset.id);
+      if (scale) { stopAllNotes(); currentTouchNotes.clear(); state.currentScale = scale; scaleSelect.value = scale.id; renderKeyboard(); searchOverlay.classList.remove('open'); }
+    });
+  });
+}
+
+document.addEventListener('keydown', (e) => {
+  if (searchOverlay.classList.contains('open')) return;
+  if (e.key === '/') { e.preventDefault(); document.getElementById('searchBtn').click(); }
+});
+
+// ===================== INIT =====================
+populateScaleSelect();
+renderKeyboard();
+kbContainer.classList.add('glissando-active');
+octaveDisplay.textContent = state.octaves;
+</script>
+</body>
+</html>

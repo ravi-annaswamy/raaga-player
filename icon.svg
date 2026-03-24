@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0c0f1a"/>
+      <stop offset="100%" stop-color="#16213e"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f0c27f"/>
+      <stop offset="50%" stop-color="#fff"/>
+      <stop offset="100%" stop-color="#4ecdc4"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#e94560"/>
+      <stop offset="100%" stop-color="#c0392b"/>
+    </linearGradient>
+    <linearGradient id="sakey" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffe8c8"/>
+      <stop offset="100%" stop-color="#f5c270"/>
+    </linearGradient>
+    <linearGradient id="wkey" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#e0e0e0"/>
+      <stop offset="100%" stop-color="#c0c0c0"/>
+    </linearGradient>
+    <linearGradient id="pkey" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#c8eed0"/>
+      <stop offset="100%" stop-color="#7cc47f"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+  <!-- Subtle glow -->
+  <circle cx="256" cy="240" r="200" fill="rgba(233,69,96,0.06)"/>
+  <circle cx="300" cy="280" r="160" fill="rgba(78,205,196,0.05)"/>
+  <!-- Om / Aum stylized mark -->
+  <text x="256" y="195" text-anchor="middle" font-family="serif" font-size="100" font-weight="700" fill="url(#gold)" opacity="0.2">&#x0BD0;</text>
+  <!-- Piano keys strip -->
+  <g transform="translate(76, 210)">
+    <!-- Sa key -->
+    <rect x="0" y="0" width="48" height="120" rx="6" fill="url(#sakey)" stroke="#b8942e" stroke-width="1"/>
+    <text x="24" y="105" text-anchor="middle" font-family="sans-serif" font-size="20" font-weight="700" fill="#6b4c00">S</text>
+    <!-- R key -->
+    <rect x="52" y="0" width="48" height="120" rx="6" fill="url(#wkey)" stroke="#999" stroke-width="1"/>
+    <text x="76" y="105" text-anchor="middle" font-family="sans-serif" font-size="18" font-weight="600" fill="#444">R</text>
+    <!-- G key -->
+    <rect x="104" y="0" width="48" height="120" rx="6" fill="url(#wkey)" stroke="#999" stroke-width="1"/>
+    <text x="128" y="105" text-anchor="middle" font-family="sans-serif" font-size="18" font-weight="600" fill="#444">G</text>
+    <!-- M key -->
+    <rect x="156" y="0" width="48" height="120" rx="6" fill="url(#wkey)" stroke="#999" stroke-width="1"/>
+    <text x="180" y="105" text-anchor="middle" font-family="sans-serif" font-size="18" font-weight="600" fill="#444">M</text>
+    <!-- P key -->
+    <rect x="208" y="0" width="48" height="120" rx="6" fill="url(#pkey)" stroke="#4a8a4d" stroke-width="1"/>
+    <text x="232" y="105" text-anchor="middle" font-family="sans-serif" font-size="20" font-weight="700" fill="#2d5e2f">P</text>
+    <!-- D key -->
+    <rect x="260" y="0" width="48" height="120" rx="6" fill="url(#wkey)" stroke="#999" stroke-width="1"/>
+    <text x="284" y="105" text-anchor="middle" font-family="sans-serif" font-size="18" font-weight="600" fill="#444">D</text>
+    <!-- N key (active/playing) -->
+    <rect x="312" y="0" width="48" height="120" rx="6" fill="url(#accent)"/>
+    <text x="336" y="105" text-anchor="middle" font-family="sans-serif" font-size="18" font-weight="600" fill="#fff">N</text>
+  </g>
+  <!-- Title text -->
+  <text x="256" y="405" text-anchor="middle" font-family="Georgia, serif" font-size="48" font-weight="700" fill="url(#gold)">Raaga</text>
+  <text x="256" y="445" text-anchor="middle" font-family="sans-serif" font-size="18" font-weight="400" letter-spacing="4" fill="rgba(255,255,255,0.5)">PLAYER</text>
+</svg>
