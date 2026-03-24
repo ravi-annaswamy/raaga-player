@@ -1,5 +1,7 @@
 # Raaga Player
 
+![Visitors](https://hits.sh/ravi-annaswamy.github.io/raaga-player.svg?label=visitors&color=4ecdc4)
+
 A browser-based Indian classical music keyboard that lets you play any raga — with no wrong notes.
 
 Select a scale and every key on screen belongs to that raga. Slide your finger across and everything sounds musical. Built as a single HTML file with zero dependencies (beyond Google Fonts), so it runs anywhere — desktop, tablet, phone.
