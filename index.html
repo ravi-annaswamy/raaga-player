@@ -527,25 +527,14 @@ body::before {
     transform: rotate(180deg);
   }
 
-  /* Collapsible top panel */
+  /* Collapsible top panel — use display toggle to avoid iOS touch issues */
   .top-panel {
-    max-height: 0;
-    overflow: hidden;
-    padding-top: 0;
-    padding-bottom: 0;
+    display: none;
     margin-bottom: 0;
-    border: none;
-    opacity: 0;
-    pointer-events: none;
-    transition: max-height 0.35s ease, padding 0.35s ease, opacity 0.25s ease, margin 0.35s ease, border 0.35s ease;
   }
   .top-panel.mobile-expanded {
-    max-height: 300px;
-    padding: 10px 12px;
+    display: flex;
     margin-bottom: 10px;
-    border: 1px solid var(--glass-border);
-    opacity: 1;
-    pointer-events: auto;
   }
 }
 @media (max-width: 480px) {
