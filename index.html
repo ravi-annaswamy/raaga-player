@@ -775,7 +775,6 @@ function midiToFreq(midi) { return 440 * Math.pow(2, (midi - 69) / 12); }
 function playNote(midiNote) {
   ensureAudio();
   if (activeNotes.has(midiNote)) return;
-  if (audioCtx.state !== 'running') return; // guard: don't queue notes if still suspended
   const freq = midiToFreq(midiNote);
   const now = audioCtx.currentTime;
   let osc, osc2, oscSub;
