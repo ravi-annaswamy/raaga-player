@@ -749,10 +749,25 @@ let state = {
 // ===================== AUDIO ENGINE =====================
 let audioCtx = null;
 const activeNotes = new Map();
+let audioUnlocked = false;
 
 function ensureAudio() {
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  if (audioCtx.state === 'suspended') audioCtx.resume();
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  // Always try to resume — iOS can re-suspend after interruptions
+  if (audioCtx.state !== 'running') {
+    audioCtx.resume();
+  }
+  // iOS unlock: play a silent buffer on first interaction to permanently unlock audio
+  if (!audioUnlocked) {
+    const buf = audioCtx.createBuffer(1, 1, audioCtx.sampleRate);
+    const src = audioCtx.createBufferSource();
+    src.buffer = buf;
+    src.connect(audioCtx.destination);
+    src.start(0);
+    audioUnlocked = true;
+  }
 }
 
 function midiToFreq(midi) { return 440 * Math.pow(2, (midi - 69) / 12); }
@@ -760,6 +775,7 @@ function midiToFreq(midi) { return 440 * Math.pow(2, (midi - 69) / 12); }
 function playNote(midiNote) {
   ensureAudio();
   if (activeNotes.has(midiNote)) return;
+  if (audioCtx.state !== 'running') return; // guard: don't queue notes if still suspended
   const freq = midiToFreq(midiNote);
   const now = audioCtx.currentTime;
   let osc, osc2, oscSub;
@@ -925,6 +941,17 @@ function highlightKey(midi, on) {
   const key = keyboard.querySelector(`.key[data-midi="${midi}"]`);
   if (key) key.classList.toggle('playing', on);
 }
+
+// Global touch/click unlock for iOS — any first interaction anywhere unlocks audio
+function unlockAudioOnce() {
+  ensureAudio();
+  document.removeEventListener('touchstart', unlockAudioOnce, true);
+  document.removeEventListener('touchend', unlockAudioOnce, true);
+  document.removeEventListener('click', unlockAudioOnce, true);
+}
+document.addEventListener('touchstart', unlockAudioOnce, true);
+document.addEventListener('touchend', unlockAudioOnce, true);
+document.addEventListener('click', unlockAudioOnce, true);
 
 const kbContainer = document.getElementById('keyboardContainer');
 kbContainer.addEventListener('mousedown', handlePointerDown);
