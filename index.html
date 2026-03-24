@@ -467,11 +467,6 @@ body::before {
   margin-top: 8px;
 }
 
-/* ---- Mobile summary bar (hidden on desktop) ---- */
-.mobile-summary-bar {
-  display: none; /* shown only on mobile */
-}
-
 /* ---- Responsive ---- */
 @media (max-width: 700px) {
   .app { padding: 0 8px; }
@@ -485,72 +480,12 @@ body::before {
   .keyboard-container { height: clamp(160px, 50vh, 300px); }
   .bottom-panel { gap: 8px; }
   .toggle-btn { padding: 5px 10px; font-size: 11px; }
-
-  /* Mobile summary bar */
-  .mobile-summary-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: var(--surface);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border);
-    border-radius: 12px;
-    padding: 10px 14px;
-    margin-bottom: 6px;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-    transition: background 0.2s;
-    flex-shrink: 0;
-  }
-  .mobile-summary-bar:active {
-    background: rgba(30, 36, 56, 0.9);
-  }
-  .mobile-summary-text {
-    font-family: 'Inter', sans-serif;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text-mid);
-    letter-spacing: 0.3px;
-  }
-  .mobile-summary-text .highlight {
-    color: var(--gold);
-    font-weight: 600;
-  }
-  .mobile-summary-chevron {
-    color: var(--text-dim);
-    transition: transform 0.3s ease;
-    flex-shrink: 0;
-    margin-left: 8px;
-  }
-  .mobile-summary-bar.expanded .mobile-summary-chevron {
-    transform: rotate(180deg);
-  }
-
-  /* Collapsible top panel */
-  .top-panel {
-    display: none;
-    margin-bottom: 0;
-  }
-  .top-panel.mobile-expanded {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 14px;
-    margin-bottom: 10px;
-  }
-
-  /* Ensure iOS doesn't intercept keyboard touches for scrolling */
-  .keyboard-container, .keyboard, .key {
-    touch-action: none;
-  }
 }
 @media (max-width: 480px) {
   .title-bar { padding: 10px 2px 6px; }
   .brand h1 { font-size: 18px; }
   .section-label { display: none; }
-  .top-panel.mobile-expanded, .bottom-panel { justify-content: center; }
-  .mobile-summary-text { font-size: 12px; }
+  .top-panel, .bottom-panel { justify-content: center; }
 }
 
 /* Glissando cursor */
@@ -574,14 +509,8 @@ body::before {
     </div>
   </div>
 
-  <!-- Collapsible summary bar (mobile only) -->
-  <div class="mobile-summary-bar" id="mobileSummaryBar">
-    <span class="mobile-summary-text" id="mobileSummaryText">Mohanam · Janya · SRG · Tanpura</span>
-    <svg class="mobile-summary-chevron" id="mobileSummaryChevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-  </div>
-
   <!-- Top controls panel -->
-  <div class="panel top-panel" id="topPanel">
+  <div class="panel top-panel">
     <div class="section">
       <span class="section-label">Type</span>
       <div class="pill-group category-pills">
@@ -1106,68 +1035,11 @@ document.addEventListener('keydown', (e) => {
   if (e.key === '/') { e.preventDefault(); document.getElementById('searchBtn').click(); }
 });
 
-// ===================== MOBILE COLLAPSIBLE TOP PANEL =====================
-const mobileSummaryBar = document.getElementById('mobileSummaryBar');
-const mobileSummaryText = document.getElementById('mobileSummaryText');
-const topPanel = document.getElementById('topPanel');
-let topPanelExpanded = false;
-
-function isMobileView() {
-  return window.matchMedia('(max-width: 700px)').matches;
-}
-
-function updateMobileSummary() {
-  const ragaName = state.currentScale.name;
-  const typeName = state.category === 'melakarta' ? 'Mela' : state.category === 'thaat' ? 'Thaat' : 'Janya';
-  const notationName = state.notation === 'sargam' ? 'SRG' : state.notation === 'western' ? 'CDE' : 'Hz';
-  const waveName = state.waveType === 'tanpura' ? 'Tanpura' : state.waveType === 'sine' ? 'Sine' : state.waveType === 'triangle' ? 'Soft' : 'Bright';
-  mobileSummaryText.innerHTML = `<span class="highlight">${ragaName}</span> · ${typeName} · ${notationName} · ${waveName}`;
-}
-
-function toggleTopPanel() {
-  topPanelExpanded = !topPanelExpanded;
-  topPanel.classList.toggle('mobile-expanded', topPanelExpanded);
-  mobileSummaryBar.classList.toggle('expanded', topPanelExpanded);
-}
-
-mobileSummaryBar.addEventListener('click', toggleTopPanel);
-
-// Auto-collapse top panel after making a selection on mobile
-function autoCollapseOnMobile() {
-  if (isMobileView() && topPanelExpanded) {
-    setTimeout(() => {
-      topPanelExpanded = false;
-      topPanel.classList.remove('mobile-expanded');
-      mobileSummaryBar.classList.remove('expanded');
-    }, 400);
-  }
-  updateMobileSummary();
-}
-
-// Hook into existing control listeners to update summary
-const origCategoryHandler = () => updateMobileSummary();
-const origScaleHandler = () => updateMobileSummary();
-const origNotationHandler = () => updateMobileSummary();
-const origWaveHandler = () => updateMobileSummary();
-
-// Observe category changes
-document.querySelectorAll('.category-pills .pill').forEach(btn => {
-  btn.addEventListener('click', autoCollapseOnMobile);
-});
-scaleSelect.addEventListener('change', autoCollapseOnMobile);
-document.querySelectorAll('.notation-pills .pill').forEach(btn => {
-  btn.addEventListener('click', autoCollapseOnMobile);
-});
-document.querySelectorAll('.wave-pills .pill').forEach(btn => {
-  btn.addEventListener('click', autoCollapseOnMobile);
-});
-
 // ===================== INIT =====================
 populateScaleSelect();
 renderKeyboard();
 kbContainer.classList.add('glissando-active');
 octaveDisplay.textContent = state.octaves;
-updateMobileSummary();
 </script>
 <!-- Analytics: GoatCounter (privacy-friendly, no cookies) -->
 <script data-goatcounter="https://ravi-annaswamy.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
