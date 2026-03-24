@@ -527,14 +527,22 @@ body::before {
     transform: rotate(180deg);
   }
 
-  /* Collapsible top panel — use display toggle to avoid iOS touch issues */
+  /* Collapsible top panel */
   .top-panel {
     display: none;
     margin-bottom: 0;
   }
   .top-panel.mobile-expanded {
     display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
     margin-bottom: 10px;
+  }
+
+  /* Ensure iOS doesn't intercept keyboard touches for scrolling */
+  .keyboard-container, .keyboard, .key {
+    touch-action: none;
   }
 }
 @media (max-width: 480px) {
