@@ -749,54 +749,16 @@ let state = {
 // ===================== AUDIO ENGINE =====================
 let audioCtx = null;
 const activeNotes = new Map();
-let audioUnlocked = false;
-let audioReadyPromise = null;
 
-async function ensureAudio() {
-  if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
-  if (audioReadyPromise) {
-    return audioReadyPromise;
-  }
-
-  audioReadyPromise = (async () => {
-    // Always try to resume — iOS can re-suspend after interruptions.
-    if (audioCtx.state !== 'running') {
-      try {
-        await audioCtx.resume();
-      } catch (error) {
-        console.warn('Audio resume failed', error);
-      }
-    }
-
-    // iOS unlock: play a silent buffer during a user gesture.
-    if (!audioUnlocked) {
-      const buf = audioCtx.createBuffer(1, 1, audioCtx.sampleRate);
-      const src = audioCtx.createBufferSource();
-      src.buffer = buf;
-      src.connect(audioCtx.destination);
-      src.start(0);
-      audioUnlocked = true;
-    }
-
-    if (audioCtx.state !== 'running') {
-      throw new Error(`Audio context unavailable: ${audioCtx.state}`);
-    }
-
-    return audioCtx;
-  })();
-
-  try {
-    return await audioReadyPromise;
-  } finally {
-    audioReadyPromise = null;
-  }
+function ensureAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
 }
 
 function midiToFreq(midi) { return 440 * Math.pow(2, (midi - 69) / 12); }
 
 function playNote(midiNote) {
+  ensureAudio();
   if (activeNotes.has(midiNote)) return;
   const freq = midiToFreq(midiNote);
   const now = audioCtx.currentTime;
@@ -844,7 +806,6 @@ function stopNote(midiNote) {
 
 function stopAllNotes() {
   for (const midi of activeNotes.keys()) stopNote(midi);
-  clearHighlightedKeys();
 }
 
 // ===================== UI =====================
@@ -874,24 +835,6 @@ function populateScaleSelect() {
     state.currentScale = scales[0];
   }
   scaleSelect.value = state.currentScale.id;
-}
-
-function syncCategoryPills() {
-  document.querySelectorAll('.category-pills .pill').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.category === state.category);
-  });
-}
-
-function setCategory(category, nextScale = null) {
-  state.category = category;
-  syncCategoryPills();
-  stopAllNotes();
-  currentTouchNotes.clear();
-  if (nextScale) {
-    state.currentScale = nextScale;
-  }
-  populateScaleSelect();
-  renderKeyboard();
 }
 
 function getKeyLabel(semitone, index, scale) {
@@ -953,35 +896,17 @@ function getNoteFromEvent(e) {
   return null;
 }
 
-async function handlePointerDown(e) {
-  e.preventDefault();
-  isPointerDown = true;
+function handlePointerDown(e) {
+  e.preventDefault(); ensureAudio(); isPointerDown = true;
   const midi = getNoteFromEvent(e);
-  if (midi === null) return;
-  try {
-    await ensureAudio();
-  } catch (error) {
-    console.warn('Audio not ready on pointer down', error);
-    return;
-  }
-  if (!isPointerDown) return;
-  playNote(midi);
-  currentTouchNotes.add(midi);
-  highlightKey(midi, true);
+  if (midi !== null) { playNote(midi); currentTouchNotes.add(midi); highlightKey(midi, true); }
 }
-async function handlePointerMove(e) {
+function handlePointerMove(e) {
   e.preventDefault();
   if (!isPointerDown) return;
   const midi = getNoteFromEvent(e);
   if (midi === null) return;
   if (state.glissando && !currentTouchNotes.has(midi)) {
-    try {
-      await ensureAudio();
-    } catch (error) {
-      console.warn('Audio not ready on pointer move', error);
-      return;
-    }
-    if (!isPointerDown) return;
     if (!state.sustain) {
       for (const n of currentTouchNotes) { stopNote(n); highlightKey(n, false); }
       currentTouchNotes.clear();
@@ -1001,26 +926,6 @@ function highlightKey(midi, on) {
   if (key) key.classList.toggle('playing', on);
 }
 
-function clearHighlightedKeys() {
-  keyboard.querySelectorAll('.key.playing').forEach(key => key.classList.remove('playing'));
-}
-
-// Global touch/click unlock for iOS — any first interaction anywhere unlocks audio
-async function unlockAudioOnce() {
-  try {
-    await ensureAudio();
-  } catch (error) {
-    console.warn('Initial audio unlock failed', error);
-    return;
-  }
-  document.removeEventListener('touchstart', unlockAudioOnce, true);
-  document.removeEventListener('touchend', unlockAudioOnce, true);
-  document.removeEventListener('click', unlockAudioOnce, true);
-}
-document.addEventListener('touchstart', unlockAudioOnce, true);
-document.addEventListener('touchend', unlockAudioOnce, true);
-document.addEventListener('click', unlockAudioOnce, true);
-
 const kbContainer = document.getElementById('keyboardContainer');
 kbContainer.addEventListener('mousedown', handlePointerDown);
 kbContainer.addEventListener('mousemove', handlePointerMove);
@@ -1034,7 +939,12 @@ kbContainer.addEventListener('touchcancel', handlePointerUp, { passive: false })
 // ===================== CONTROLS =====================
 document.querySelectorAll('.category-pills .pill').forEach(btn => {
   btn.addEventListener('click', () => {
-    setCategory(btn.dataset.category);
+    document.querySelectorAll('.category-pills .pill').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.category = btn.dataset.category;
+    stopAllNotes(); currentTouchNotes.clear();
+    populateScaleSelect();
+    renderKeyboard();
   });
 });
 
@@ -1115,11 +1025,7 @@ function renderSearchResults(query) {
   searchResults.querySelectorAll('.search-result').forEach(el => {
     el.addEventListener('click', () => {
       const scale = ALL_SCALES.find(s => s.id === el.dataset.id);
-      if (scale) {
-        setCategory(scale.type, scale);
-        scaleSelect.value = scale.id;
-        searchOverlay.classList.remove('open');
-      }
+      if (scale) { stopAllNotes(); currentTouchNotes.clear(); state.currentScale = scale; scaleSelect.value = scale.id; renderKeyboard(); searchOverlay.classList.remove('open'); }
     });
   });
 }
@@ -1134,7 +1040,6 @@ populateScaleSelect();
 renderKeyboard();
 kbContainer.classList.add('glissando-active');
 octaveDisplay.textContent = state.octaves;
-syncCategoryPills();
 </script>
 <!-- Analytics: GoatCounter (privacy-friendly, no cookies) -->
 <script data-goatcounter="https://ravi-annaswamy.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
